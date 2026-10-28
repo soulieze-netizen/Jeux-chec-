@@ -1,0 +1,470 @@
+<title>Échiquier d'Etienne</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout : une colonne, échiquier en haut, panneau d'explication dessous ; onglets en bas comme une appli */
+:root{
+ --bg:#efe9df; --panel:#fbf8f2; --fg:#2a241d; --muted:#76695a; --line:#d8cdbd;
+ --light:#ecd9b6; --dark:#a97a50; --accent:#8a3b1f; --good:#3f7a3a; --bad:#a3312b; --sel:#d9b84a;
+ --display:'Alegreya',Georgia,serif; --body:'Alegreya Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1815;--panel:#25211c;--fg:#efe6d8;--muted:#a8998a;--line:#3a332b;--light:#cfb48c;--dark:#8a5f3c;--accent:#e08a5d;--good:#7cbf6e;--bad:#e2726a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1b1815;--panel:#25211c;--fg:#efe6d8;--muted:#a8998a;--line:#3a332b;--light:#cfb48c;--dark:#8a5f3c;--accent:#e08a5d;--good:#7cbf6e;--bad:#e2726a;color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 96px;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-family:var(--display);font-size:1.5rem;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:1.2rem;margin:0}
+.sub{color:var(--muted);font-size:.9rem}
+.board{position:relative;width:100%;aspect-ratio:1;max-width:100%;display:grid;grid-template-columns:repeat(8,1fr);border:3px solid var(--dark);border-radius:4px;overflow:hidden;user-select:none;touch-action:manipulation}
+.sq{position:relative;display:flex;align-items:center;justify-content:center;font-size:min(9.5vw,52px);line-height:1;cursor:pointer}
+.sq.l{background:var(--light)}.sq.d{background:var(--dark)}
+.sq.last::after{content:"";position:absolute;inset:0;background:rgba(217,184,74,.38)}
+.sq.sel::after{content:"";position:absolute;inset:0;background:rgba(217,184,74,.65)}
+.sq.chk{background:radial-gradient(circle,#e04a3a 0%,rgba(224,74,58,.4) 45%,transparent 75%),var(--dark)}
+.sq .dot{position:absolute;width:28%;height:28%;border-radius:50%;background:rgba(40,30,20,.32);z-index:2}
+.sq .ring{position:absolute;inset:4%;border-radius:50%;border:5px solid rgba(40,30,20,.32);z-index:2}
+.pc{position:relative;z-index:3;font-family:"Segoe UI Symbol","DejaVu Sans","Noto Sans Symbols 2",serif}
+.pc.w{color:#fffaf0;text-shadow:0 0 1px #000,0 0 1px #000,0 1px 1px #000,1px 0 1px #000,-1px 0 1px #000}
+.pc.b{color:#1d1712;text-shadow:0 0 1px #fff4}
+.coord{position:absolute;font-size:10px;font-weight:700;z-index:1;opacity:.75}
+.coord.f{right:3px;bottom:1px}.coord.r{left:3px;top:1px}
+.sq.l .coord{color:var(--dark)}.sq.d .coord{color:var(--light)}
+.shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{min-height:3em}
+.msg b.move{font-family:var(--display);font-size:1.1rem;color:var(--accent)}
+.ok{color:var(--good);font-weight:700}.ko{color:var(--bad);font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;font-weight:500;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;padding:9px 14px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
+button:disabled{opacity:.45}
+.list{display:flex;flex-direction:column;gap:8px}
+.op{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:12px 14px}
+.op small{color:var(--muted);display:block}
+.tag{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:2px 9px;white-space:nowrap;border:1px solid var(--line)}
+.tag.w{background:#fffaf0;color:#2a241d}.tag.b{background:#2a241d;color:#fffaf0}
+.label{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.levels{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.levels button.on,.seg button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.seg{display:flex;gap:6px}
+.hist{font-variant-numeric:tabular-nums;font-size:.9rem;color:var(--muted);max-height:4.5em;overflow:auto}
+.progress{height:6px;background:var(--line);border-radius:3px;overflow:hidden}.progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:20}
+nav.tabs button{flex:1;max-width:190px;border:0;border-radius:0;background:none;padding:12px 4px;font-size:.95rem;color:var(--muted)}
+nav.tabs button.on{color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--accent)}
+.modal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:10}
+.modal .box{background:var(--panel);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.modal .opts{display:flex;gap:6px}
+.modal .opts button{font-size:40px;line-height:1;padding:6px 10px;background:var(--light)}
+.score{font-variant-numeric:tabular-nums;color:var(--muted)}
+</style>
+
+<div class="wrap">
+ <header><h1>Échiquier d'Etienne</h1><span class="sub" id="status"></span></header>
+ <div class="board" id="board"></div>
+ <div id="view"></div>
+</div>
+<nav class="tabs">
+ <button id="t-learn" class="on">Ouvertures</button>
+ <button id="t-ex">Exercices</button>
+ <button id="t-play">Jouer</button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+// ===== Données : ouvertures =====
+const OPENINGS = [
+{ id:'ecossaise', name:'Partie écossaise', side:'w', eco:'C45',
+  intro:"Les blancs ouvrent le centre tout de suite avec 3.d4. Jeu actif, simple à comprendre : on échange le pion e5 et on centralise.",
+  moves:[
+  ['e4',"Le pion roi occupe le centre et libère la dame et le fou f1."],
+  ['e5',"Les noirs prennent aussi leur part du centre."],
+  ['Nf3',"Développement avec menace : le cavalier attaque le pion e5."],
+  ['Nc6',"Les noirs défendent e5 tout en développant une pièce."],
+  ['d4',"C'est l'Écossaise : on attaque e5 une deuxième fois pour ouvrir le centre tout de suite, au lieu de jouer Fc4 (Italienne) ou Fb5 (Espagnole)."],
+  ['exd4',"Pratiquement forcé : si les noirs laissent prendre en e5, ils perdent le centre."],
+  ['Nxd4',"On reprend avec le cavalier, qui se retrouve centralisé en d4. Les blancs gardent le pion e4, les noirs n'ont plus de pion central."],
+  ['Nf6',"Les noirs développent et attaquent tout de suite e4."],
+  ['Nxc6',"On échange pour abîmer la structure noire : après ...bxc6 les pions noirs sont doublés sur la colonne c."],
+  ['bxc6',"Reprise vers le centre, la règle habituelle."],
+  ['e5',"On chasse le cavalier f6 et on gagne de l'espace."],
+  ['Qe7',"Les noirs clouent le pion e5 : s'il bouge, la dame attaque e2 et le roi blanc."],
+  ['Qe2',"On défend e5 et on oppose sa dame : une réponse au clouage."],
+  ['Nd5',"Le cavalier se replie au centre, la seule bonne case."],
+  ['c4',"On chasse encore le cavalier et on prend de l'espace. Plan blanc : Cd2, Cf3/b3, grand roque ou petit roque selon la position."]
+  ]},
+{ id:'italienne', name:'Partie italienne', side:'w', eco:'C54',
+  intro:"L'ouverture la plus classique : développement rapide, fou vers f7, centre préparé avec c3 et d3 (Giuoco Pianissimo).",
+  moves:[
+  ['e4',"Prise du centre et ouverture des diagonales."],
+  ['e5',"Réponse symétrique."],
+  ['Nf3',"On attaque e5 en développant."],
+  ['Nc6',"Défense naturelle de e5."],
+  ['Bc4',"Le fou vise f7, le point faible noir : il n'est défendu que par le roi."],
+  ['Bc5',"Les noirs font pareil et visent f2."],
+  ['c3',"On prépare d4 pour construire un grand centre, et on enlève la case b4 au fou noir."],
+  ['Nf6',"Développement et contre-attaque sur e4."],
+  ['d3',"Version calme : on défend e4 solidement et on manœuvrera plus tard. Moins de risques que d4 direct."],
+  ['d6',"Les noirs consolident e5 et ouvrent la diagonale du fou c8."],
+  ['O-O',"Le roi se met à l'abri, la tour se rapproche du centre."],
+  ['O-O',"Pareil pour les noirs."],
+  ['Re1',"La tour soutient la poussée d4 plus tard et protège e4."],
+  ['a6',"Les noirs préparent ...b5 ou ...Fa7 et offrent une case de retraite au fou."],
+  ['Bb3',"Le fou recule avant d'être attaqué par ...b5 ou ...Ca5."],
+  ['Ba7',"Le fou noir se met aussi à l'abri de d4-d5."],
+  ['h3',"Coup clé : on empêche ...Fg4 qui clouerait le cavalier f3. Plan suivant : Cbd2-f1-g3."]
+  ]},
+{ id:'londres', name:'Système de Londres', side:'w', eco:'D02',
+  intro:"Un système plutôt qu'une ouverture : on joue presque toujours la même structure (d4, Ff4, e3, c3). Idéal pour peu de théorie.",
+  moves:[
+  ['d4',"Le pion dame occupe le centre ; il est déjà défendu par la dame."],
+  ['d5',"Les noirs bloquent."],
+  ['Bf4',"Le coup typique du Londres : on sort le fou AVANT de jouer e3, sinon il serait enfermé."],
+  ['Nf6',"Développement normal."],
+  ['e3',"On solidifie d4 et on ouvre la diagonale du fou f1."],
+  ['c5',"Les noirs attaquent d4, la réaction la plus active."],
+  ['c3',"On construit une chaîne de pions c3-d4-e3 : le centre devient un roc."],
+  ['Nc6',"Encore une pièce sur d4."],
+  ['Nd2',"Le cavalier va en d2 (pas c3, la case est prise par le pion) et pourra aller en f3 ou e5."],
+  ['e6',"Les noirs ouvrent la diagonale de leur fou f8."],
+  ['Ngf3',"Développement, contrôle de e5."],
+  ['Bd6',"Les noirs proposent l'échange de notre bon fou."],
+  ['Bg3',"On garde le fou : s'ils prennent en g3, on reprend hxg3 et la colonne h s'ouvre pour notre tour."],
+  ['O-O',"Les noirs roquent."],
+  ['Bd3',"Le fou vise h7 et le roque noir. Plan : O-O, De2, Ce5 et parfois une attaque sur le roi."]
+  ]},
+{ id:'carokann', name:'Défense Caro-Kann', side:'b', eco:'B18',
+  intro:"Contre 1.e4, une défense très solide. On prépare ...d5 avec ...c6 pour pouvoir sortir le fou c8 AVANT de jouer ...e6.",
+  moves:[
+  ['e4',"Les blancs prennent le centre."],
+  ['c6',"Le coup Caro-Kann : on prépare ...d5 pour reprendre avec un pion si les blancs échangent."],
+  ['d4',"Les blancs construisent le grand centre."],
+  ['d5',"On conteste immédiatement e4."],
+  ['Nc3',"Défense de e4 (variante principale)."],
+  ['dxe4',"On échange pour libérer le jeu."],
+  ['Nxe4',"Les blancs reprennent avec le cavalier, bien centralisé."],
+  ['Bf5',"Tout l'intérêt de la Caro-Kann : le fou c8 sort avant ...e6 et n'est pas enfermé, contrairement à la Française."],
+  ['Ng3',"Le cavalier attaque notre fou."],
+  ['Bg6',"On recule le fou sur la même diagonale, il reste actif."],
+  ['h4',"Les blancs menacent h5 pour piéger le fou."],
+  ['h6',"On prépare une retraite en h7 pour le fou."],
+  ['Nf3',"Développement."],
+  ['Nd7',"Le cavalier va en d7 pour empêcher Ce5, qui attaquerait le fou g6."],
+  ['h5',"Les blancs chassent le fou."],
+  ['Bh7',"Le fou se met à l'abri en h7."],
+  ['Bd3',"Les blancs proposent l'échange des fous."],
+  ['Bxd3',"On échange : notre fou était un peu passif, et la dame blanche va devoir reprendre."],
+  ['Qxd3',"La dame reprend."],
+  ['e6',"Maintenant seulement on joue ...e6 : la structure est solide, le fou f8 peut sortir. Plan : ...Cgf6, ...Dc7, ...O-O-O ou ...Fe7."]
+  ]},
+{ id:'sicilienne', name:'Sicilienne Najdorf', side:'b', eco:'B92',
+  intro:"La défense la plus combative contre 1.e4. Le jeu est déséquilibré : les noirs échangent un pion de côté contre un pion central.",
+  moves:[
+  ['e4',"Les blancs prennent le centre."],
+  ['c5',"La Sicilienne : on contrôle d4 depuis le côté, sans copier les blancs."],
+  ['Nf3',"Les blancs préparent d4."],
+  ['d6',"On contrôle e5 et on prépare ...Cf6."],
+  ['d4',"Les blancs ouvrent le centre."],
+  ['cxd4',"On échange un pion de côté (c) contre un pion central (d) : à long terme, c'est un petit avantage de structure."],
+  ['Nxd4',"Les blancs reprennent et se développent vite."],
+  ['Nf6',"On attaque e4 avec gain de temps."],
+  ['Nc3',"Défense de e4."],
+  ['a6',"Le coup Najdorf : on enlève la case b5 aux pièces blanches et on prépare ...e5 et ...b5."],
+  ['Be2',"Une variante calme."],
+  ['e5',"On chasse le cavalier central et on prend de l'espace. Le trou en d5 est le prix à payer."],
+  ['Nb3',"Le cavalier recule."],
+  ['Be7',"Développement, préparation du roque."],
+  ['O-O',"Les blancs roquent."],
+  ['O-O',"Nous aussi. Plan : ...Fe6, ...Cbd7, ...b5 et pression sur la colonne c."]
+  ]},
+{ id:'gdr', name:'Gambit dame refusé', side:'b', eco:'D58',
+  intro:"Contre 1.d4 et 2.c4, on garde le pion d5 avec ...e6. Structure solide jouée par les champions du monde.",
+  moves:[
+  ['d4',"Les blancs occupent le centre."],
+  ['d5',"On occupe aussi le centre."],
+  ['c4',"Le Gambit dame : les blancs offrent un pion pour détourner notre pion d5."],
+  ['e6',"On refuse : d5 reste défendu, et la diagonale du fou f8 s'ouvre."],
+  ['Nc3',"Pression sur d5."],
+  ['Nf6',"On défend d5 une fois de plus en développant."],
+  ['Bg5',"Les blancs clouent le cavalier f6 sur la dame."],
+  ['Be7',"On déloue : le fou s'intercale, le cavalier peut bouger."],
+  ['e3',"Les blancs ouvrent leur fou f1."],
+  ['O-O',"Roi en sécurité tôt."],
+  ['Nf3',"Développement."],
+  ['h6',"On pose la question au fou : il doit choisir entre échanger ou reculer."],
+  ['Bh4',"Le fou garde le clouage."],
+  ['b6',"La Tartakower : notre fou c8 ira en b7, le problème du fou enfermé est réglé. Plan : ...Fb7, ...Cbd7, ...c5."]
+  ]}
+];
+
+// ===== Tactiques =====
+const PUZZLES = [
+ {fen:'6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1', sol:'Rd8#', mate:true, title:'Mat du couloir', expl:"Le roi noir est enfermé par ses propres pions. Td8 donne mat : la 8e rangée n'est pas défendue."},
+ {fen:'r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1', sol:'Nc7+', title:'Fourchette', expl:"Cc7+ attaque à la fois le roi et la tour a8. Le roi doit bouger, on prend la tour."},
+ {fen:'r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4', sol:'Qxf7#', mate:true, title:'Coup du berger', expl:"Dxf7# : la dame, soutenue par le fou c4, prend en f7, le point faible noir. Le roi ne peut pas reprendre."},
+ {fen:'6rk/6pp/7N/8/8/8/8/6K1 w - - 0 1', sol:'Nf7#', mate:true, title:'Mat à l’étouffée', expl:"Cf7# : le roi est entouré de ses propres pièces et seul le cavalier peut sauter par-dessus."},
+ {fen:'8/q1P1k3/8/8/8/8/8/7K w - - 0 1', sol:'c8=N+', title:'Sous-promotion', expl:"Promouvoir en dame ne donne rien. En cavalier, c8=C+ fait échec ET attaque la dame a7 : fourchette !"},
+ {fen:'4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 1', sol:'exd6', title:'Prise en passant', expl:"Le pion noir vient de faire d7-d5 en deux pas. Ton pion e5 peut le prendre « en passant » en allant en d6, mais seulement au coup qui suit."},
+ {fen:'7k/8/6K1/8/8/8/8/Q7 w - - 0 1', sol:'Qa8#', mate:true, title:'Mat dame et roi', expl:"Da8# : la dame contrôle toute la 8e rangée, le roi blanc couvre g7 et h7."},
+ {fen:'r1b1kb1r/pppp1ppp/2n5/4q3/4n3/2N5/PPPPBPPP/R1BQKR2 w Qkq - 0 1', sol:'Nxe4', title:'Pièce en prise', expl:"Le cavalier e4 n'est défendu par rien : Cxe4 gagne une pièce gratuitement. Regarde toujours ce qui est en prise !"},
+ {fen:'2kr3r/ppp2ppp/2n5/8/1b6/2N2B2/PPP2PPP/R3K2R b KQ - 0 1', sol:'Bxc3+', title:'Clouage et échec', expl:"Fxc3+ prend le cavalier avec échec ; après bxc3, la structure blanche est ruinée et on garde l'initiative."}
+];
+
+// ===== Moteur =====
+const VAL={p:100,n:320,b:330,r:500,q:900,k:0};
+const PST={
+p:[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,20,20,0,0,0,5,-5,-10,0,0,-10,-5,5,5,10,10,-20,-20,10,10,5,0,0,0,0,0,0,0,0],
+n:[-50,-40,-30,-30,-30,-30,-40,-50,-40,-20,0,0,0,0,-20,-40,-30,0,10,15,15,10,0,-30,-30,5,15,20,20,15,5,-30,-30,0,15,20,20,15,0,-30,-30,5,10,15,15,10,5,-30,-40,-20,0,5,5,0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50],
+b:[-20,-10,-10,-10,-10,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,10,10,5,0,-10,-10,5,5,10,10,5,5,-10,-10,0,10,10,10,10,0,-10,-10,10,10,10,10,10,10,-10,-10,5,0,0,0,0,5,-10,-20,-10,-10,-10,-10,-10,-10,-20],
+r:[0,0,0,0,0,0,0,0,5,10,10,10,10,10,10,5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,0,0,0,5,5,0,0,0],
+q:[-20,-10,-10,-5,-5,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,5,5,5,0,-10,-5,0,5,5,5,5,0,-5,0,0,5,5,5,5,0,-5,-10,5,5,5,5,5,0,-10,-10,0,5,0,0,0,0,-10,-20,-10,-10,-5,-5,-10,-10,-20],
+k:[-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-20,-30,-30,-40,-40,-30,-30,-20,-10,-20,-20,-20,-20,-20,-20,-10,20,20,0,0,0,0,20,20,20,30,10,0,0,10,30,20],
+ke:[-50,-40,-30,-20,-20,-30,-40,-50,-30,-20,-10,0,0,-10,-20,-30,-30,-10,20,30,30,20,-10,-30,-30,-10,30,40,40,30,-10,-30,-30,-10,30,40,40,30,-10,-30,-30,-10,20,30,30,20,-10,-30,-30,-30,0,0,0,0,-30,-30,-50,-30,-30,-30,-30,-30,-30,-50]};
+
+function evaluate(g){ // du point de vue des blancs
+  const b=g.board(); let s=0, mat=0;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c]; if(p&&p.type!=='k'&&p.type!=='p')mat+=VAL[p.type];}
+  const end=mat<=1300;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=b[r][c]; if(!p)continue;
+    const t=(p.type==='k'&&end)?'ke':p.type;
+    const idx=p.color==='w'?r*8+c:(7-r)*8+c;
+    const v=VAL[p.type]+PST[t][idx]; s+=p.color==='w'?v:-v;}
+  return s;
+}
+const LEVELS={
+ 800:{depth:1,noise:120,blunder:0.22,q:false,time:400},
+ 1000:{depth:2,noise:70,blunder:0.10,q:false,time:800},
+ 1200:{depth:2,noise:35,blunder:0.04,q:true,time:1000},
+ 1400:{depth:3,noise:20,blunder:0.02,q:true,time:1500},
+ 1600:{depth:3,noise:8,blunder:0,q:true,time:2000},
+ 1800:{depth:4,noise:0,blunder:0,q:true,time:3000},
+ 2000:{depth:5,noise:0,blunder:0,q:true,time:4500}};
+
+function orderMoves(ms){return ms.sort((a,b)=>score(b)-score(a));
+  function score(m){let s=0; if(m.captured)s+=10*VAL[m.captured]-VAL[m.piece]+1000; if(m.promotion)s+=800; return s;}}
+function bestMove(g,elo,book){
+  const L=LEVELS[elo]; const t0=Date.now(); let abort=false; let nodes=0;
+  const sign=g.turn()==='w'?1:-1;
+  // livre d'ouvertures
+  if(book){const h=g.history().join(' ');const cands=[];
+    for(const o of OPENINGS){const seq=o.moves.map(m=>m[0]);const n=g.history().length;
+      if(n<seq.length&&seq.slice(0,n).join(' ')===h)cands.push(seq[n]);}
+    if(cands.length&&elo>=1200)return cands[Math.floor(Math.random()*cands.length)];}
+  const root=g.moves({verbose:true});
+  if(Math.random()<L.blunder)return root[Math.floor(Math.random()*root.length)].san;
+  function q(alpha,beta,col,d){ if((++nodes&255)===0&&Date.now()-t0>L.time)abort=true; if(abort)return 0;
+    const stand=col*evaluate(g); if(stand>=beta)return beta; if(alpha<stand)alpha=stand; if(d>4)return alpha;
+    const ms=orderMoves(g.moves({verbose:true}).filter(m=>m.captured));
+    for(const m of ms){g.move(m);const v=-q(-beta,-alpha,-col,d+1);g.undo(); if(v>=beta)return beta; if(v>alpha)alpha=v;}
+    return alpha;}
+  function nm(depth,alpha,beta,col,ply){
+    if((++nodes&255)===0&&Date.now()-t0>L.time)abort=true; if(abort)return 0;
+    const ms=g.moves({verbose:true});
+    if(ms.length===0)return g.in_check()?-100000+ply:0;
+    if(g.in_draw())return 0;
+    if(depth===0)return L.q?q(alpha,beta,col,0):col*evaluate(g);
+    orderMoves(ms);
+    for(const m of ms){g.move(m);const v=-nm(depth-1,-beta,-alpha,-col,ply+1);g.undo(); if(abort)return 0;
+      if(v>=beta)return beta; if(v>alpha)alpha=v;}
+    return alpha;}
+  let best=root.map(m=>({m,v:0}));
+  orderMoves(root);
+  for(let d=1;d<=L.depth;d++){
+    const res=[]; let alpha=-1e9;
+    for(const m of root){g.move(m);const v=-nm(d-1,-1e9,-alpha+L.noise+1,-sign,1);g.undo(); if(abort)break; res.push({m,v}); if(v>alpha)alpha=v;}
+    if(abort&&d>1)break;
+    best=res.length===root.length?res:best;
+    if(abort)break;
+    root.sort((a,b)=>{const va=(res.find(x=>x.m===a)||{v:-1e9}).v, vb=(res.find(x=>x.m===b)||{v:-1e9}).v; return vb-va;});
+  }
+  const top=Math.max(...best.map(x=>x.v));
+  const pool=best.filter(x=>x.v>=top-L.noise).map(x=>({m:x.m,v:x.v+Math.random()*L.noise}));
+  pool.sort((a,b)=>b.v-a.v);
+  return pool[0].m.san;
+}
+if(typeof module!=='undefined')module.exports={OPENINGS,PUZZLES,bestMove,LEVELS};
+
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const G={P:{k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'}};
+const FR={K:'R',Q:'D',R:'T',B:'F',N:'C'};
+const fr=san=>san.replace(/[KQRBN]/g,c=>FR[c]).replace('O-O-O','O-O-O');
+// ===== Échiquier =====
+const B={game:new Chess(),orient:'w',sel:null,targets:[],last:null,onMove:null,locked:false};
+function render(){
+ const el=$('#board'); el.innerHTML='';
+ const files='abcdefgh';
+ const chk=B.game.in_check()?B.game.turn():null;
+ for(let i=0;i<64;i++){
+  const r=Math.floor(i/8),c=i%8;
+  const rank=B.orient==='w'?8-r:r+1, file=B.orient==='w'?files[c]:files[7-c];
+  const sq=file+rank; const p=B.game.get(sq);
+  const d=document.createElement('div');
+  d.className='sq '+(((r+c)%2)?'d':'l');
+  if(B.last&&(B.last.from===sq||B.last.to===sq))d.classList.add('last');
+  if(B.sel===sq)d.classList.add('sel');
+  if(p&&p.type==='k'&&p.color===chk)d.classList.add('chk');
+  if(c===7)d.insertAdjacentHTML('beforeend',`<span class="coord r" style="left:auto;right:3px">${rank}</span>`);
+  if(r===7)d.insertAdjacentHTML('beforeend',`<span class="coord f" style="right:auto;left:3px">${file}</span>`);
+  if(p)d.insertAdjacentHTML('beforeend',`<span class="pc ${p.color}">${G.P[p.type]}︎</span>`);
+  if(B.targets.includes(sq))d.insertAdjacentHTML('beforeend',p||B.game.get(sq)?'<span class="ring"></span>':'<span class="dot"></span>');
+  d.onclick=()=>tap(sq);
+  el.appendChild(d);
+ }
+}
+function tap(sq){
+ if(B.locked||!B.onMove)return;
+ const p=B.game.get(sq);
+ if(B.sel&&B.targets.includes(sq)){
+  const from=B.sel; B.sel=null; B.targets=[];
+  const mv=B.game.moves({square:from,verbose:true}).filter(m=>m.to===sq);
+  if(mv.some(m=>m.promotion)){render();askPromo(B.game.turn(),pr=>{submit({from,to:sq,promotion:pr})});return;}
+  submit({from,to:sq}); return;
+ }
+ if(p&&p.color===B.game.turn()){B.sel=sq;B.targets=B.game.moves({square:sq,verbose:true}).map(m=>m.to);}
+ else{B.sel=null;B.targets=[];}
+ render();
+}
+function submit(m){
+ const test=new Chess(B.game.fen()); const r=test.move(m); if(!r)return render();
+ B.onMove(r); render();
+}
+function play(san){const r=B.game.move(san); if(r)B.last={from:r.from,to:r.to}; render(); return r;}
+function askPromo(color,cb){
+ const m=document.createElement('div');m.className='modal';
+ m.innerHTML=`<div class="box"><div class="label">Promotion : choisis la pièce</div><div class="opts">${['q','r','b','n'].map(t=>`<button data-t="${t}" aria-label="${{q:'Dame',r:'Tour',b:'Fou',n:'Cavalier'}[t]}"><span class="pc ${color}">${G.P[t]}︎</span></button>`).join('')}</div><button data-t="x">Annuler</button></div>`;
+ m.onclick=e=>{const b=e.target.closest('button');if(!b)return;m.remove();if(b.dataset.t!=='x')cb(b.dataset.t);};
+ $('#board').appendChild(m);
+}
+function shake(){const b=$('#board');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');}
+function reset(fen,orient){B.game=new Chess(fen||undefined);B.orient=orient||'w';B.sel=null;B.targets=[];B.last=null;B.onMove=null;B.locked=false;render();}
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+let token=0; // annule les animations d'une vue précédente
+
+// ===== Onglet Ouvertures =====
+function viewLearnList(){
+ token++; reset(); $('#status').textContent='';
+ $('#view').innerHTML=`<div class="panel"><h2>Choisis une ouverture</h2><p class="sub" style="margin:0">Tu joues ton camp, l'adversaire joue tout seul. Chaque coup est expliqué.</p>
+ <div class="label">Avec les blancs</div><div class="list">${opBtns('w')}</div>
+ <div class="label">Avec les noirs</div><div class="list">${opBtns('b')}</div></div>`;
+ document.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>learn(OPENINGS.find(o=>o.id===b.dataset.op)));
+}
+function opBtns(side){return OPENINGS.filter(o=>o.side===side).map(o=>`<button class="op" data-op="${o.id}"><span><b>${o.name}</b><small>${o.moves.slice(0,6).map((m,i)=>(i%2?'':(i/2+1)+'.')+fr(m[0])).join(' ')}…</small></span><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></button>`).join('');}
+async function learn(o){
+ const my=++token; reset(null,o.side); let i=0, fails=0;
+ $('#view').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2>${o.name}</h2><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></div>
+ <div class="progress"><i id="pg" style="width:0"></i></div>
+ <div class="msg" id="msg">${o.intro}</div>
+ <div class="row"><button id="hint">Indice</button><button id="show">Montrer le coup</button><button id="restart">Recommencer</button><button id="back">Liste</button></div></div>`;
+ const msg=$('#msg');
+ $('#back').onclick=viewLearnList; $('#restart').onclick=()=>learn(o);
+ const pg=()=>$('#pg').style.width=(100*i/o.moves.length)+'%';
+ const num=k=>Math.floor(k/2)+1+(k%2?'…':'.');
+ async function step(){
+  if(my!==token)return; pg();
+  if(i>=o.moves.length){msg.innerHTML=`<span class="ok">Ligne terminée !</span> Tu connais la ${o.name}. Refais-la sans indice, puis va dans Exercices pour la tester.`;B.onMove=null;$('#hint').disabled=$('#show').disabled=true;return;}
+  const [san,ex]=o.moves[i]; const mine=(i%2===0)===(o.side==='w');
+  if(!mine){B.onMove=null; await wait(i===0?900:700); if(my!==token)return; play(san);
+   msg.innerHTML=`Adversaire : <b class="move">${num(i)} ${fr(san)}</b><br>${ex}<br><span class="sub">À toi de jouer.</span>`; i++; fails=0; return step();}
+  B.onMove=r=>{
+   if(r.san===san){play(san);msg.innerHTML=`<span class="ok">Bien joué :</span> <b class="move">${num(i)} ${fr(san)}</b><br>${ex}`;i++;fails=0;step();}
+   else{fails++;shake();msg.innerHTML=`<span class="ko">${fr(r.san)} n'est pas le coup de la ligne.</span> ${fails>=2?hintTxt():'Réessaie.'}`;}
+  };
+ }
+ function hintTxt(){const m=new Chess(B.game.fen()).move(o.moves[i][0]);return `Indice : bouge la pièce en <b>${m.from}</b>.`;}
+ $('#hint').onclick=()=>{if(i<o.moves.length){const m=new Chess(B.game.fen()).move(o.moves[i][0]);B.sel=m.from;B.targets=B.game.moves({square:m.from,verbose:true}).map(x=>x.to);render();}};
+ $('#show').onclick=()=>{if(i<o.moves.length&&B.onMove){const [san,ex]=o.moves[i];play(san);msg.innerHTML=`Le coup était <b class="move">${num(i)} ${fr(san)}</b><br>${ex}`;i++;fails=0;step();}};
+ step();
+}
+
+// ===== Exercices =====
+const EX={mode:'tac',ok:0,tot:0};
+function viewEx(){
+ token++;
+ $('#view').innerHTML=`<div class="panel"><div class="seg"><button data-m="tac">Tactique</button><button data-m="op">Quiz ouvertures</button></div>
+ <div class="msg" id="msg"></div><div class="row"><button id="sol">Solution</button><button class="primary" id="next">Suivant</button><span class="score" id="sc" style="margin-left:auto;align-self:center"></span></div></div>`;
+ document.querySelectorAll('[data-m]').forEach(b=>{b.classList.toggle('on',b.dataset.m===EX.mode);b.onclick=()=>{EX.mode=b.dataset.m;viewEx();};});
+ $('#next').onclick=nextEx; nextEx();
+}
+function score(){$('#sc').textContent=`${EX.ok} / ${EX.tot} réussis`;}
+function nextEx(){
+ const my=++token; score(); const msg=$('#msg');
+ if(EX.mode==='tac'){
+  const p=PUZZLES[Math.floor(Math.random()*PUZZLES.length)];
+  reset(p.fen,p.fen.split(' ')[1]); const side=B.game.turn()==='w'?'blancs':'noirs';
+  msg.innerHTML=`<b>${p.title}</b><br>Les ${side} jouent. ${p.mate?'Trouve le mat en 1.':'Trouve le meilleur coup.'}`;
+  let done=false;
+  const finish=good=>{done=true;B.onMove=null;EX.tot++;if(good)EX.ok++;score();};
+  B.onMove=r=>{ if(done)return;
+   const t=new Chess(B.game.fen());t.move(r.san);
+   if(r.san===p.sol||(p.mate&&t.in_checkmate())){play(r.san);finish(true);msg.innerHTML=`<span class="ok">Exact : ${fr(r.san)}</span><br>${p.expl}`;}
+   else{shake();msg.innerHTML=`<span class="ko">${fr(r.san)} : non.</span> Cherche encore, ou appuie sur Solution.`;}};
+  $('#sol').onclick=()=>{if(done)return;play(p.sol);finish(false);msg.innerHTML=`Solution : <b class="move">${fr(p.sol)}</b><br>${p.expl}`;};
+ } else {
+  const o=OPENINGS[Math.floor(Math.random()*OPENINGS.length)];
+  const mineIdx=o.moves.map((_,k)=>k).filter(k=>(k%2===0)===(o.side==='w')&&k>=2);
+  const k=mineIdx[Math.floor(Math.random()*mineIdx.length)];
+  reset(null,o.side); for(let j=0;j<k;j++)B.game.move(o.moves[j][0]);
+  const lm=B.game.history({verbose:true}).pop(); B.last=lm; render();
+  msg.innerHTML=`<b>${o.name}</b>, après ${o.moves.slice(0,k).map((m,j)=>(j%2?'':(j/2+1)+'.')+fr(m[0])).join(' ')}<br>Quel est le coup de la ligne ?`;
+  let done=false, tries=0;
+  const finish=good=>{done=true;B.onMove=null;EX.tot++;if(good)EX.ok++;score();};
+  B.onMove=r=>{if(done)return;
+   if(r.san===o.moves[k][0]){play(r.san);finish(tries===0);msg.innerHTML=`<span class="ok">Oui : ${fr(r.san)}</span><br>${o.moves[k][1]}`;}
+   else{tries++;shake();msg.innerHTML=`<span class="ko">${fr(r.san)} n'est pas le coup de la ligne.</span> Réessaie.`;}};
+  $('#sol').onclick=()=>{if(done)return;play(o.moves[k][0]);finish(false);msg.innerHTML=`Le coup : <b class="move">${fr(o.moves[k][0])}</b><br>${o.moves[k][1]}`;};
+ }
+}
+
+// ===== Jouer =====
+const PL={elo:1200,color:'w'};
+function viewPlay(){
+ token++; reset(null,PL.color);
+ $('#view').innerHTML=`<div class="panel"><div class="label">Niveau de l'ordinateur</div>
+ <div class="levels">${[800,1000,1200,1400,1600,1800,2000].map(e=>`<button data-e="${e}">${e}</button>`).join('')}</div>
+ <div class="label">Ta couleur</div><div class="seg"><button data-c="w">Blancs</button><button data-c="b">Noirs</button></div>
+ <div class="msg" id="msg"></div><div class="hist" id="hist"></div>
+ <div class="row"><button class="primary" id="new">Nouvelle partie</button><button id="undo">Annuler un coup</button><button id="flip">Tourner</button></div>
+ <p class="sub" style="margin:0">Niveaux approximatifs : moteur maison qui calcule dans ton navigateur. Le 2000 réfléchit ~4 s.</p></div>`;
+ const sync=()=>{document.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',+b.dataset.e===PL.elo));document.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('on',b.dataset.c===PL.color));};
+ document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{PL.elo=+b.dataset.e;sync();});
+ document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{PL.color=b.dataset.c;sync();newGame();});
+ $('#new').onclick=newGame; $('#flip').onclick=()=>{B.orient=B.orient==='w'?'b':'w';render();};
+ $('#undo').onclick=()=>{if(B.locked)return;B.game.undo();if(B.game.turn()!==PL.color)B.game.undo();const h=B.game.history({verbose:true});B.last=h.length?h[h.length-1]:null;B.sel=null;B.targets=[];render();upd();};
+ sync(); newGame();
+}
+function upd(){
+ const g=B.game,msg=$('#msg'); if(!msg)return;
+ const h=g.history(); $('#hist').textContent=h.map((m,i)=>(i%2?'':(i/2+1)+'. ')+fr(m)).join(' ');
+ if(g.in_checkmate())msg.innerHTML=g.turn()===PL.color?'<span class="ko">Échec et mat. L\'ordinateur gagne.</span>':'<span class="ok">Échec et mat ! Tu as gagné.</span>';
+ else if(g.in_stalemate())msg.textContent='Pat : partie nulle.';
+ else if(g.in_threefold_repetition())msg.textContent='Nulle par répétition.';
+ else if(g.insufficient_material())msg.textContent='Nulle : matériel insuffisant.';
+ else if(g.in_draw())msg.textContent='Partie nulle (règle des 50 coups).';
+ else msg.innerHTML=(g.turn()===PL.color?'À toi de jouer.':'L\'ordinateur réfléchit…')+(g.in_check()?' <span class="ko">Échec !</span>':'');
+}
+function newGame(){
+ const my=++token; reset(null,PL.color); upd();
+ B.onMove=r=>{play(r.san);upd();computer(my);};
+ if(PL.color==='b')computer(my);
+}
+async function computer(my){
+ if(B.game.game_over()||B.game.turn()===PL.color)return;
+ B.locked=true; upd(); await wait(60); if(my!==token)return;
+ const t=Date.now(); const san=bestMove(new Chess(B.game.fen()+''),PL.elo,true,B.game.history());
+ await wait(Math.max(0,500-(Date.now()-t))); if(my!==token)return;
+ play(san); B.locked=false; upd();
+}
+// livre : bestMove lit l'historique, on lui passe une partie rejouée
+const _bm=bestMove; bestMove=function(g,elo,book,hist){const x=new Chess();for(const m of hist)x.move(m);return _bm(x,elo,book);};
+
+// ===== Onglets =====
+const tabs={learn:viewLearnList,ex:viewEx,play:viewPlay};
+for(const k in tabs)$('#t-'+k).onclick=()=>{document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('on'));$('#t-'+k).classList.add('on');tabs[k]();};
+viewLearnList();
+</script>
