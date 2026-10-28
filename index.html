@@ -1822,130 +1822,238 @@ var Chess = function(fen) {
 
 </script>
 <script>
-// ===== Données : ouvertures =====
-const OPENINGS = [
-{ id:'ecossaise', name:'Partie écossaise', side:'w', eco:'C45',
-  intro:"Les blancs ouvrent le centre tout de suite avec 3.d4. Jeu actif, simple à comprendre : on échange le pion e5 et on centralise.",
-  moves:[
-  ['e4',"Le pion roi occupe le centre et libère la dame et le fou f1."],
-  ['e5',"Les noirs prennent aussi leur part du centre."],
-  ['Nf3',"Développement avec menace : le cavalier attaque le pion e5."],
-  ['Nc6',"Les noirs défendent e5 tout en développant une pièce."],
-  ['d4',"C'est l'Écossaise : on attaque e5 une deuxième fois pour ouvrir le centre tout de suite, au lieu de jouer Fc4 (Italienne) ou Fb5 (Espagnole)."],
-  ['exd4',"Pratiquement forcé : si les noirs laissent prendre en e5, ils perdent le centre."],
-  ['Nxd4',"On reprend avec le cavalier, qui se retrouve centralisé en d4. Les blancs gardent le pion e4, les noirs n'ont plus de pion central."],
-  ['Nf6',"Les noirs développent et attaquent tout de suite e4."],
-  ['Nxc6',"On échange pour abîmer la structure noire : après ...bxc6 les pions noirs sont doublés sur la colonne c."],
-  ['bxc6',"Reprise vers le centre, la règle habituelle."],
-  ['e5',"On chasse le cavalier f6 et on gagne de l'espace."],
-  ['Qe7',"Les noirs clouent le pion e5 : s'il bouge, la dame attaque e2 et le roi blanc."],
-  ['Qe2',"On défend e5 et on oppose sa dame : une réponse au clouage."],
-  ['Nd5',"Le cavalier se replie au centre, la seule bonne case."],
-  ['c4',"On chasse encore le cavalier et on prend de l'espace. Plan blanc : Cd2, Cf3/b3, grand roque ou petit roque selon la position."]
+// Chaque variante : [nom, "coups SAN", {ply: explication}] ; une explication absente est reprise d'une variante précédente au même endroit.
+const RAW = [
+{ id:'ecossaise', name:'Partie écossaise', side:'w',
+  intro:"Les blancs ouvrent le centre tout de suite avec 3.d4 : jeu actif et facile à comprendre.",
+  variants:[
+  ['Mieses (4…Cf6)', 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Nf6 Nxc6 bxc6 e5 Qe7 Qe2 Nd5 c4 Nb6 Nc3 Qe6 Qe4 Bb4 Bd2 Ba6 b3', {
+   0:"Le pion roi occupe le centre et libère la dame et le fou f1.",
+   1:"Les noirs prennent aussi leur part du centre.",
+   2:"Développement avec menace : le cavalier attaque e5.",
+   3:"Les noirs défendent e5 en développant.",
+   4:"C'est l'Écossaise : on attaque e5 une 2e fois pour ouvrir le centre tout de suite.",
+   5:"Pratiquement forcé, sinon les noirs perdent e5.",
+   6:"Le cavalier reprend et se retrouve centralisé. Les noirs n'ont plus de pion central.",
+   7:"Les noirs attaquent e4 en développant.",
+   8:"On échange pour doubler les pions noirs sur la colonne c.",
+   9:"Reprise vers le centre.",
+   10:"On chasse le cavalier f6 et on gagne de l'espace.",
+   11:"Clouage : si e5 bouge, la dame noire attaque e2 et le roi.",
+   12:"On défend e5 et on neutralise le clouage.",
+   13:"Le cavalier se replie au centre.",
+   14:"On chasse encore le cavalier et on prend de l'espace.",
+   15:"Le cavalier recule en b6.",
+   16:"Développement : le cavalier contrôle d5 et e4.",
+   17:"La dame noire reprend le contrôle de e5.",
+   18:"Dame centrale : elle défend e5 et vise c6 et h7.",
+   19:"Le fou cloue notre cavalier c3.",
+   20:"On déloue et on développe.",
+   21:"Les noirs attaquent le pion c4.",
+   22:"On défend c4 solidement. Plan : Fd3 ou Fe2, puis petit roque. Les pions doublés noirs restent une faiblesse."}],
+  ['Classique (4…Fc5, 5.Cxc6)', 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Nxc6 Qf6 Qd2 dxc6 Nc3 Be6 Na4 Bd4 Bd3 Ne7 O-O', {
+   7:"Le fou vise notre cavalier d4 et la case f2.",
+   8:"On échange tout de suite : le fou c5 vise alors une case vide.",
+   9:"Intermédiaire : la dame menace mat en f2.",
+   10:"La dame défend f2 et peut aller en f4 ou g5.",
+   11:"Reprise vers le centre : la colonne d s'ouvre pour les noirs.",
+   12:"Développement, contrôle de d5.",
+   13:"Le fou se développe et protège d5.",
+   14:"On chasse le fou c5 de sa belle diagonale.",
+   15:"Le fou reste actif au centre.",
+   16:"Développement : on prépare le roque.",
+   17:"Développement du dernier cavalier.",
+   18:"Roi en sécurité. Plan : c3 pour chasser le fou d4, puis f4 pour attaquer."}],
+  ['Classique (4…Fc5, 5.Fe3)', 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Bc5 Be3 Qf6 c3 Nge7 Bc4 Ne5 Be2 Qg6 O-O', {
+   8:"On défend d4 avec le fou : tension maintenue au centre.",
+   9:"La dame met une 2e pression sur d4.",
+   10:"On renforce d4 avec un pion.",
+   11:"Le cavalier va en e7 pour garder la diagonale de la dame libre.",
+   12:"Développement, le fou vise f7.",
+   13:"Le cavalier chasse notre fou.",
+   14:"On recule le fou.",
+   15:"La dame attaque e4 et g2.",
+   16:"On roque et on protège g2. Le pion e4 est empoisonné : après …Dxe4, Cb5 attaque c7 et c5."}],
+  ['Steinitz (4…Dh4)', 'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Qh4 Nc3 Bb4 Be2 Qxe4 Nb5 Bxc3+ bxc3 Kd8 O-O', {
+   7:"Agressif : la dame attaque e4 tout de suite.",
+   8:"On développe en défendant e4.",
+   9:"Le fou cloue le cavalier c3, e4 est à nouveau menacé.",
+   10:"On propose le pion e4 en échange d'une grosse avance de développement.",
+   11:"Les noirs prennent le pion, mais leur dame est exposée.",
+   12:"Menace Cxc7+ avec fourchette roi-tour.",
+   13:"Les noirs éliminent un défenseur avant de défendre c7.",
+   14:"On reprend vers le centre.",
+   15:"Le roi noir doit défendre c7 et perd le roque.",
+   16:"Roi à l'abri, tour vers e1. Les blancs ont beaucoup d'avance pour le pion."}]
   ]},
-{ id:'italienne', name:'Partie italienne', side:'w', eco:'C54',
-  intro:"L'ouverture la plus classique : développement rapide, fou vers f7, centre préparé avec c3 et d3 (Giuoco Pianissimo).",
-  moves:[
-  ['e4',"Prise du centre et ouverture des diagonales."],
-  ['e5',"Réponse symétrique."],
-  ['Nf3',"On attaque e5 en développant."],
-  ['Nc6',"Défense naturelle de e5."],
-  ['Bc4',"Le fou vise f7, le point faible noir : il n'est défendu que par le roi."],
-  ['Bc5',"Les noirs font pareil et visent f2."],
-  ['c3',"On prépare d4 pour construire un grand centre, et on enlève la case b4 au fou noir."],
-  ['Nf6',"Développement et contre-attaque sur e4."],
-  ['d3',"Version calme : on défend e4 solidement et on manœuvrera plus tard. Moins de risques que d4 direct."],
-  ['d6',"Les noirs consolident e5 et ouvrent la diagonale du fou c8."],
-  ['O-O',"Le roi se met à l'abri, la tour se rapproche du centre."],
-  ['O-O',"Pareil pour les noirs."],
-  ['Re1',"La tour soutient la poussée d4 plus tard et protège e4."],
-  ['a6',"Les noirs préparent ...b5 ou ...Fa7 et offrent une case de retraite au fou."],
-  ['Bb3',"Le fou recule avant d'être attaqué par ...b5 ou ...Ca5."],
-  ['Ba7',"Le fou noir se met aussi à l'abri de d4-d5."],
-  ['h3',"Coup clé : on empêche ...Fg4 qui clouerait le cavalier f3. Plan suivant : Cbd2-f1-g3."]
+{ id:'italienne', name:'Partie italienne', side:'w',
+  intro:"L'ouverture la plus classique : développement rapide et fou vers f7.",
+  variants:[
+  ['Giuoco Pianissimo (c3, d3)', 'e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O Re1 a6 Bb3 Ba7 h3 h6 Nbd2 Re8 Nf1 Be6', {
+   0:"Prise du centre et ouverture des diagonales.",1:"Réponse symétrique.",2:"On attaque e5 en développant.",3:"Défense naturelle de e5.",
+   4:"Le fou vise f7, le point faible noir.",5:"Les noirs font pareil et visent f2.",
+   6:"On prépare d4 et on enlève b4 au fou noir.",7:"Développement et attaque sur e4.",
+   8:"Version calme : e4 est défendu, on manœuvrera plus tard.",9:"Les noirs consolident e5.",
+   10:"Le roi à l'abri.",11:"Pareil pour les noirs.",12:"La tour soutient e4 et prépare d4.",
+   13:"Les noirs préparent …b5 ou …Fa7.",14:"Le fou recule avant d'être attaqué.",15:"Le fou noir se met à l'abri.",
+   16:"Coup clé : on empêche …Fg4 qui clouerait le cavalier f3.",17:"Les noirs empêchent aussi Fg5.",
+   18:"Le cavalier commence sa manœuvre d2-f1-g3.",19:"La tour soutient e5.",
+   20:"Le cavalier défend h2 et ira en g3 vers f5.",21:"Les noirs proposent d'échanger notre bon fou b3. Plan : Cg3, d4."}],
+  ['Giuoco Piano (c3, d4)', 'e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d4 exd4 cxd4 Bb4+ Bd2 Bxd2+ Nbxd2 d5 exd5 Nxd5 Qb3 Nce7 O-O O-O', {
+   8:"Version tranchante : on construit le grand centre tout de suite.",
+   9:"Les noirs doivent prendre, sinon e5 tombe.",10:"Le centre blanc est magnifique.",
+   11:"Échec pour gagner un temps.",12:"On interpose le fou.",13:"Les noirs échangent.",
+   14:"Le cavalier reprend et défend e4.",15:"Les noirs attaquent le centre blanc : c'est le coup libérateur.",
+   16:"On échange.",17:"Le cavalier est centralisé.",18:"La dame attaque d5 et b7.",
+   19:"Le cavalier défend d5.",20:"Roi à l'abri.",21:"Pareil. Les blancs ont un pion isolé d4 mais des pièces actives : plan Tfe1, Ce4."}],
+  ['Deux cavaliers (4.Cg5)', 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Na5 Bb5+ c6 dxc6 bxc6 Be2 h6 Nf3 e4 Ne5 Bd6 d4', {
+   5:"Les noirs contre-attaquent e4 au lieu de copier.",
+   6:"Agressif : le cavalier et le fou attaquent f7.",
+   7:"Seule défense sérieuse : on bloque la diagonale du fou.",
+   8:"On prend le pion.",
+   9:"Pas …Cxd5 (Cxf7 !) : le cavalier attaque le fou c4.",
+   10:"Échec, le fou reste actif.",11:"Les noirs sacrifient un pion pour le développement.",
+   12:"On garde le pion.",13:"Reprise.",14:"Le fou recule.",15:"Les noirs chassent le cavalier g5.",
+   16:"Le cavalier recule.",17:"Les noirs prennent de l'espace avec gain de temps.",
+   18:"Le cavalier se centralise.",19:"Développement avec pression sur e5.",
+   20:"On soutient le cavalier e5. Les blancs ont un pion de plus, les noirs de l'activité."}]
   ]},
-{ id:'londres', name:'Système de Londres', side:'w', eco:'D02',
-  intro:"Un système plutôt qu'une ouverture : on joue presque toujours la même structure (d4, Ff4, e3, c3). Idéal pour peu de théorie.",
-  moves:[
-  ['d4',"Le pion dame occupe le centre ; il est déjà défendu par la dame."],
-  ['d5',"Les noirs bloquent."],
-  ['Bf4',"Le coup typique du Londres : on sort le fou AVANT de jouer e3, sinon il serait enfermé."],
-  ['Nf6',"Développement normal."],
-  ['e3',"On solidifie d4 et on ouvre la diagonale du fou f1."],
-  ['c5',"Les noirs attaquent d4, la réaction la plus active."],
-  ['c3',"On construit une chaîne de pions c3-d4-e3 : le centre devient un roc."],
-  ['Nc6',"Encore une pièce sur d4."],
-  ['Nd2',"Le cavalier va en d2 (pas c3, la case est prise par le pion) et pourra aller en f3 ou e5."],
-  ['e6',"Les noirs ouvrent la diagonale de leur fou f8."],
-  ['Ngf3',"Développement, contrôle de e5."],
-  ['Bd6',"Les noirs proposent l'échange de notre bon fou."],
-  ['Bg3',"On garde le fou : s'ils prennent en g3, on reprend hxg3 et la colonne h s'ouvre pour notre tour."],
-  ['O-O',"Les noirs roquent."],
-  ['Bd3',"Le fou vise h7 et le roque noir. Plan : O-O, De2, Ce5 et parfois une attaque sur le roi."]
+{ id:'londres', name:'Système de Londres', side:'w',
+  intro:"Un système : presque toujours la même structure d4, Ff4, e3, c3. Peu de théorie à retenir.",
+  variants:[
+  ['Contre …d5 et …c5', 'd4 d5 Bf4 Nf6 e3 c5 c3 Nc6 Nd2 e6 Ngf3 Bd6 Bg3 O-O Bd3 b6 Ne5 Bb7 f4', {
+   0:"Le pion dame occupe le centre.",1:"Les noirs bloquent.",
+   2:"Le coup du Londres : le fou sort AVANT e3, sinon il serait enfermé.",3:"Développement normal.",
+   4:"On solidifie d4 et on ouvre le fou f1.",5:"Les noirs attaquent d4.",
+   6:"Chaîne c3-d4-e3 : le centre devient un roc.",7:"Encore une pièce sur d4.",
+   8:"Le cavalier va en d2 (c3 est pris par le pion).",9:"Les noirs ouvrent leur fou f8.",
+   10:"Développement, contrôle de e5.",11:"Les noirs proposent l'échange de notre bon fou.",
+   12:"On garde le fou : après …Fxg3 hxg3, la colonne h s'ouvre.",13:"Les noirs roquent.",
+   14:"Le fou vise h7 et le roque noir.",15:"Les noirs préparent …Fb7.",
+   16:"Le cavalier s'installe en e5, une case forte.",17:"Le fou noir vise le centre.",
+   18:"On soutient le cavalier e5 : structure « Stonewall » pour attaquer à l'aile roi."}],
+  ['Contre l’Est-indienne (…g6)', 'd4 Nf6 Bf4 g6 e3 Bg7 Nf3 O-O Be2 d6 h3 Nbd7 O-O c5 c3 b6 a4 Bb7 Nbd2', {
+   1:"Les noirs gardent leurs options.",3:"Les noirs préparent le fianchetto du fou.",
+   4:"On solidifie d4 et on ouvre le fou f1.",5:"Le fou noir vise la grande diagonale.",6:"Développement.",7:"Roi noir à l'abri.",
+   8:"Version solide : le fou en e2 ne craint pas …Cg4/…Ch5.",9:"Les noirs préparent …e5.",
+   10:"On garde une retraite en h2 pour le fou et on empêche …Cg4.",11:"Les noirs soutiennent …e5.",
+   12:"Roi à l'abri.",13:"Les noirs attaquent d4.",14:"On renforce d4.",
+   15:"Les noirs préparent …Fb7.",16:"On gagne de l'espace à l'aile dame et on gêne …b5.",
+   17:"Le fou noir vise e4.",18:"On contrôle e4. Plan : Dc2, e4 pour gagner le centre."}],
+  ['Contre …Ff5', 'd4 d5 Bf4 Nf6 e3 Bf5 c4 e6 Nc3 c6 Nf3 Nbd7 Qb3 Qb6 c5 Qxb3 axb3', {
+   5:"Les noirs copient avec leur fou.",
+   6:"Avec le fou noir parti, b7 devient faible : on attaque d5.",7:"Les noirs défendent d5.",
+   8:"Pression sur d5.",9:"Solide.",10:"Développement.",11:"Développement.",
+   12:"La dame attaque b7.",13:"Les noirs couvrent b7 et proposent l'échange.",
+   14:"On gagne de l'espace avec gain de temps.",15:"Les noirs échangent.",
+   16:"On reprend vers le centre : la tour a1 travaille sur la colonne a. Plan : b4-b5."}]
   ]},
-{ id:'carokann', name:'Défense Caro-Kann', side:'b', eco:'B18',
-  intro:"Contre 1.e4, une défense très solide. On prépare ...d5 avec ...c6 pour pouvoir sortir le fou c8 AVANT de jouer ...e6.",
-  moves:[
-  ['e4',"Les blancs prennent le centre."],
-  ['c6',"Le coup Caro-Kann : on prépare ...d5 pour reprendre avec un pion si les blancs échangent."],
-  ['d4',"Les blancs construisent le grand centre."],
-  ['d5',"On conteste immédiatement e4."],
-  ['Nc3',"Défense de e4 (variante principale)."],
-  ['dxe4',"On échange pour libérer le jeu."],
-  ['Nxe4',"Les blancs reprennent avec le cavalier, bien centralisé."],
-  ['Bf5',"Tout l'intérêt de la Caro-Kann : le fou c8 sort avant ...e6 et n'est pas enfermé, contrairement à la Française."],
-  ['Ng3',"Le cavalier attaque notre fou."],
-  ['Bg6',"On recule le fou sur la même diagonale, il reste actif."],
-  ['h4',"Les blancs menacent h5 pour piéger le fou."],
-  ['h6',"On prépare une retraite en h7 pour le fou."],
-  ['Nf3',"Développement."],
-  ['Nd7',"Le cavalier va en d7 pour empêcher Ce5, qui attaquerait le fou g6."],
-  ['h5',"Les blancs chassent le fou."],
-  ['Bh7',"Le fou se met à l'abri en h7."],
-  ['Bd3',"Les blancs proposent l'échange des fous."],
-  ['Bxd3',"On échange : notre fou était un peu passif, et la dame blanche va devoir reprendre."],
-  ['Qxd3',"La dame reprend."],
-  ['e6',"Maintenant seulement on joue ...e6 : la structure est solide, le fou f8 peut sortir. Plan : ...Cgf6, ...Dc7, ...O-O-O ou ...Fe7."]
+{ id:'carokann', name:'Défense Caro-Kann', side:'b',
+  intro:"Contre 1.e4, très solide. …c6 prépare …d5 pour sortir le fou c8 avant …e6.",
+  variants:[
+  ['Classique (4…Ff5)', 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3 Nd7 h5 Bh7 Bd3 Bxd3 Qxd3 e6 Bd2 Ngf6 O-O-O Be7', {
+   0:"Les blancs prennent le centre.",1:"Le coup Caro-Kann : on prépare …d5.",
+   2:"Le grand centre.",3:"On conteste e4.",4:"Défense de e4.",5:"On échange pour libérer le jeu.",
+   6:"Cavalier centralisé.",7:"Tout l'intérêt : le fou sort avant …e6, il ne sera pas enfermé.",
+   8:"Le cavalier attaque le fou.",9:"Le fou reste sur la même diagonale.",
+   10:"Menace h5 pour piéger le fou.",11:"On prépare la retraite h7.",12:"Développement.",
+   13:"Le cavalier empêche Ce5 qui attaquerait le fou.",14:"Les blancs chassent le fou.",
+   15:"Le fou se met à l'abri.",16:"Proposition d'échange.",17:"On échange : la dame doit reprendre.",
+   18:"La dame reprend.",19:"Maintenant seulement …e6 : structure solide.",
+   20:"Les blancs préparent le grand roque.",21:"Développement, le roi pourra roquer.",
+   22:"Grand roque blanc.",23:"Le fou se développe. On roquera souvent aussi au grand côté : …Dc7, …O-O-O."}],
+  ['Avance (3.e5)', 'e4 c6 d4 d5 e5 Bf5 Nf3 e6 Be2 c5 Be3 Nd7 O-O Ne7 c4 dxc4 Na3 Nd5 Nxc4 Be7', {
+   4:"Les blancs gagnent de l'espace et ferment le centre.",
+   5:"Le fou sort avant …e6, comme toujours en Caro-Kann.",6:"Développement.",
+   7:"On consolide d5 et on ouvre le fou f8.",8:"Développement calme.",
+   9:"On attaque la base de la chaîne blanche : d4.",10:"Le fou défend d4.",
+   11:"Le cavalier soutient …c5 et vise e5.",12:"Roi à l'abri.",
+   13:"Le cavalier ira en d5 ou c6.",14:"Les blancs ouvrent le jeu.",15:"On prend le pion.",
+   16:"Les blancs récupèrent le pion par Cxc4.",17:"Cavalier magnifique en d5.",
+   18:"Les blancs reprennent le pion.",19:"On termine le développement et on roque ensuite."}],
+  ['Échange (3.exd5)', 'e4 c6 d4 d5 exd5 cxd5 Bd3 Nc6 c3 Nf6 Bf4 Bg4 Qb3 Qd7 Nd2 e6 Ngf3 Bxf3 Nxf3 Bd6 Bxd6 Qxd6 O-O O-O', {
+   4:"Les blancs échangent : structure symétrique.",5:"Reprise avec le pion.",
+   6:"Le fou vise h7.",7:"Développement, pression sur d4.",8:"Structure solide.",
+   9:"Développement.",10:"Le fou blanc sort.",11:"Notre fou sort avant …e6.",
+   12:"La dame attaque b7.",13:"La dame défend b7.",14:"Développement.",
+   15:"On ouvre le fou f8.",16:"Développement.",17:"On échange pour éviter Ce5.",
+   18:"Reprise.",19:"On propose l'échange des fous.",20:"Les blancs échangent.",
+   21:"Reprise.",22:"Roi blanc à l'abri.",23:"Pareil. Plan noir : attaque de minorité avec …b5-b4."}]
   ]},
-{ id:'sicilienne', name:'Sicilienne Najdorf', side:'b', eco:'B92',
-  intro:"La défense la plus combative contre 1.e4. Le jeu est déséquilibré : les noirs échangent un pion de côté contre un pion central.",
-  moves:[
-  ['e4',"Les blancs prennent le centre."],
-  ['c5',"La Sicilienne : on contrôle d4 depuis le côté, sans copier les blancs."],
-  ['Nf3',"Les blancs préparent d4."],
-  ['d6',"On contrôle e5 et on prépare ...Cf6."],
-  ['d4',"Les blancs ouvrent le centre."],
-  ['cxd4',"On échange un pion de côté (c) contre un pion central (d) : à long terme, c'est un petit avantage de structure."],
-  ['Nxd4',"Les blancs reprennent et se développent vite."],
-  ['Nf6',"On attaque e4 avec gain de temps."],
-  ['Nc3',"Défense de e4."],
-  ['a6',"Le coup Najdorf : on enlève la case b5 aux pièces blanches et on prépare ...e5 et ...b5."],
-  ['Be2',"Une variante calme."],
-  ['e5',"On chasse le cavalier central et on prend de l'espace. Le trou en d5 est le prix à payer."],
-  ['Nb3',"Le cavalier recule."],
-  ['Be7',"Développement, préparation du roque."],
-  ['O-O',"Les blancs roquent."],
-  ['O-O',"Nous aussi. Plan : ...Fe6, ...Cbd7, ...b5 et pression sur la colonne c."]
+{ id:'sicilienne', name:'Sicilienne Najdorf', side:'b',
+  intro:"La défense la plus combative : on échange un pion de côté contre un pion central.",
+  variants:[
+  ['Najdorf 6.Fe2', 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 Be2 e5 Nb3 Be7 O-O O-O Be3 Be6 Qd2 Nbd7 a4 Rc8', {
+   0:"Les blancs prennent le centre.",1:"La Sicilienne : on contrôle d4 depuis le côté.",
+   2:"Les blancs préparent d4.",3:"On contrôle e5 et on prépare …Cf6.",4:"Les blancs ouvrent le centre.",
+   5:"Pion de côté contre pion central : petit avantage de structure.",6:"Reprise et développement rapide.",
+   7:"On attaque e4 avec gain de temps.",8:"Défense de e4.",
+   9:"Le coup Najdorf : pas de case b5 pour les blancs, on prépare …e5 et …b5.",
+   10:"Variante calme.",11:"On chasse le cavalier central et on prend de l'espace.",
+   12:"Le cavalier recule.",13:"Développement.",14:"Roi blanc à l'abri.",15:"Pareil.",
+   16:"Le fou contrôle d4 et b6.",17:"Le fou contrôle d5, la case clé.",
+   18:"Les blancs connectent leurs tours.",19:"Développement, le cavalier pourra aller en b6.",
+   20:"Les blancs empêchent …b5.",21:"La tour sur la colonne c ouverte : pression sur c2."}],
+  ['Attaque anglaise (6.Fe3)', 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 Be3 e5 Nb3 Be6 f3 Be7 Qd2 O-O O-O-O Nbd7 g4 b5', {
+   10:"Les blancs préparent f3, Dd2, O-O-O et g4 : attaque à l'aile roi.",
+   11:"On prend de l'espace au centre.",12:"Retraite.",
+   13:"Le fou contrôle d5.",14:"On empêche …Cg4 et on prépare g4.",15:"Développement.",
+   16:"Préparation du grand roque.",17:"Roi noir à l'abri.",18:"Grand roque : roques opposés, la course commence.",
+   19:"Développement.",20:"Les blancs lancent l'attaque.",21:"On lance la nôtre à l'aile dame : …b4 chassera le cavalier c3."}],
+  ['Alapin (2.c3)', 'e4 c5 c3 Nf6 e5 Nd5 d4 cxd4 Nf3 Nc6 cxd4 d6 Bc4 Nb6 Bb5 dxe5 Nxe5 Bd7 Nxd7 Qxd7', {
+   2:"Les blancs veulent construire le centre avec d4.",3:"On attaque e4 tout de suite.",
+   4:"Le pion chasse le cavalier.",5:"Le cavalier se centralise.",
+   6:"Le centre blanc.",7:"On échange.",8:"Développement avant de reprendre.",
+   9:"Développement avec pression sur d4.",10:"Reprise.",11:"On attaque la pointe e5.",
+   12:"Le fou attaque d5.",13:"Le cavalier recule.",14:"Clouage du cavalier c6.",
+   15:"On échange au centre.",16:"Reprise avec le cavalier.",17:"On déloue.",
+   18:"Échange.",19:"Position égale : plan …e6, …Fe7 et roque."}]
   ]},
-{ id:'gdr', name:'Gambit dame refusé', side:'b', eco:'D58',
-  intro:"Contre 1.d4 et 2.c4, on garde le pion d5 avec ...e6. Structure solide jouée par les champions du monde.",
-  moves:[
-  ['d4',"Les blancs occupent le centre."],
-  ['d5',"On occupe aussi le centre."],
-  ['c4',"Le Gambit dame : les blancs offrent un pion pour détourner notre pion d5."],
-  ['e6',"On refuse : d5 reste défendu, et la diagonale du fou f8 s'ouvre."],
-  ['Nc3',"Pression sur d5."],
-  ['Nf6',"On défend d5 une fois de plus en développant."],
-  ['Bg5',"Les blancs clouent le cavalier f6 sur la dame."],
-  ['Be7',"On déloue : le fou s'intercale, le cavalier peut bouger."],
-  ['e3',"Les blancs ouvrent leur fou f1."],
-  ['O-O',"Roi en sécurité tôt."],
-  ['Nf3',"Développement."],
-  ['h6',"On pose la question au fou : il doit choisir entre échanger ou reculer."],
-  ['Bh4',"Le fou garde le clouage."],
-  ['b6',"La Tartakower : notre fou c8 ira en b7, le problème du fou enfermé est réglé. Plan : ...Fb7, ...Cbd7, ...c5."]
+{ id:'gdr', name:'Gambit dame refusé', side:'b',
+  intro:"Contre 1.d4 et 2.c4, on garde d5 avec …e6. Solide, joué par les champions du monde.",
+  variants:[
+  ['Tartakower (7…b6)', 'd4 d5 c4 e6 Nc3 Nf6 Bg5 Be7 e3 O-O Nf3 h6 Bh4 b6 cxd5 Nxd5 Bxe7 Qxe7 Nxd5 exd5 Rc1 Be6 Qa4 c5', {
+   0:"Les blancs occupent le centre.",1:"On occupe aussi le centre.",
+   2:"Le Gambit dame : les blancs proposent un pion.",3:"On refuse : d5 reste défendu, le fou f8 s'ouvre.",
+   4:"Pression sur d5.",5:"Développement, défense de d5.",6:"Clouage du cavalier f6.",
+   7:"On déloue.",8:"Les blancs ouvrent leur fou f1.",9:"Roi à l'abri tôt.",10:"Développement.",
+   11:"On pose la question au fou.",12:"Le fou garde le clouage.",13:"La Tartakower : le fou ira en b7.",
+   14:"Les blancs échangent au centre.",15:"Reprise avec le cavalier pour échanger des pièces.",
+   16:"Échange.",17:"Reprise.",18:"Échange.",19:"Reprise : nos pions c7 et d5 « pendants » donnent de l'activité.",
+   20:"La tour vise c7.",21:"Le fou défend d5 et c8.",22:"La dame attaque a7.",
+   23:"Coup libérateur : on active le jeu au centre."}],
+  ['Échange (4.cxd5)', 'd4 d5 c4 e6 Nc3 Nf6 cxd5 exd5 Bg5 c6 e3 Be7 Bd3 Nbd7 Qc2 O-O Nf3 Re8 O-O Nf8', {
+   6:"Les blancs échangent pour fixer la structure.",7:"Reprise avec le pion e.",
+   8:"Clouage.",9:"Solide : on défend d5 et on garde une diagonale pour la dame.",
+   10:"Développement.",11:"On déloue.",12:"Le fou vise h7.",13:"Développement.",
+   14:"Dame et fou visent h7.",15:"Roi à l'abri.",16:"Développement.",
+   17:"La tour sur la colonne e.",18:"Roi blanc à l'abri.",19:"Le cavalier défend h7 et ira en g6 ou e6."}],
+  ['Variante 5.Ff4', 'd4 d5 c4 e6 Nc3 Nf6 Nf3 Be7 Bf4 O-O e3 c5 dxc5 Bxc5 Qc2 Nc6 a3 Qa5 Rd1 Re8', {
+   6:"Développement d'abord.",7:"Développement.",8:"Le fou sort sur f4 plutôt que g5.",
+   9:"Roi à l'abri.",10:"Solide.",11:"On attaque le centre tout de suite.",
+   12:"Les blancs prennent.",13:"Reprise avec gain de temps.",14:"Dame active.",
+   15:"Développement.",16:"Les blancs préparent b4.",17:"La dame cloue le cavalier c3.",
+   18:"La tour vise d5.",19:"On prépare …e5 pour libérer le jeu."}]
   ]}
 ];
+const OPENINGS = RAW.map(o=>{
+  const variants = o.variants.map(([name, line, ex])=>({name, sans:line.split(' '), ex}));
+  // reprise des explications communes
+  variants.forEach((v,i)=>v.sans.forEach((s,k)=>{ if(v.ex[k]) return;
+    for(let j=0;j<i;j++){const w=variants[j]; if(w.sans.slice(0,k+1).join(' ')===v.sans.slice(0,k+1).join(' ')&&w.ex[k]){v.ex[k]=w.ex[k];break;}}
+    if(!v.ex[k]) v.ex[k]='';}));
+  return {...o, variants: variants.map(v=>({name:v.name, moves:v.sans.map((s,k)=>[s,v.ex[k]])}))};
+});
+// Pièges d'ouverture (positions construites par coups)
+const TRAPS = [
+ {op:'italienne', line:'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5', sol:'Nxf7', title:'Italienne : le Foie frit', expl:"Cxf7 ! fourchette dame et tour. Après …Rxf7 Df3+, le roi noir est exposé et le cavalier d5 cloué. C'est pour ça que les noirs jouent …Ca5 et pas …Cxd5."},
+ {op:'carokann', line:'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7 Qe2 Ngf6', sol:'Nd6#', mate:true, title:'Caro-Kann : le mat étouffé', expl:"Cd6# ! Le pion e7 est cloué par la dame e2. Ne joue jamais …Cgf6 avec la dame blanche en e2 : joue …Cdf6 ou …e6."},
+ {op:'londres', line:'d4 d5 Bf4 c5 e3 Qb6 Nc3 Qxb2', sol:'Nb5', alt:['Nxd5'], title:'Londres : piège sur b2', expl:"Cb5 ! menace Cc7+ (fourchette roi-tour) et Tb1 qui piège la dame. Le pion b2 était un appât."},
+ {op:'gdr', line:'d4 d5 c4 e6 Nc3 Nf6 Bg5 Nbd7 cxd5 exd5 Nxd5', sol:'Nxd5', title:'GDR : le piège de l’éléphant', expl:"Cxd5 ! Si Fxd8, alors …Fb4+ Dd2 Fxd2+ Rxd2 Rxd8 : les noirs gagnent une pièce. Le cavalier d7 n'était pas un oubli."},
+ {op:'ecossaise', line:'e4 e5 Nf3 Nc6 d4 exd4 Nxd4 Qh4 Nc3 Bb4 Be2 Qxe4 Nb5 Bxc3+ bxc3 Qxg2', sol:'Bf3', title:'Écossaise : la dame trop gourmande', expl:"Ff3 ! La dame noire est attaquée, et Cxc7+ arrive. Prendre un 2e pion avec la dame a été une erreur."},
+ {op:'italienne', line:'e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7', sol:'Qxg2', title:'Italienne : le piège Blackburne', expl:"Dxg2 ! attaque la tour h1. Après Tf1 Dxe4+ Fe2 Cf3#. Les blancs n'auraient pas dû prendre en e5."}
+];
+
 
 // ===== Tactiques =====
 const PUZZLES = [
@@ -1997,7 +2105,7 @@ function bestMove(g,elo,book){
   const sign=g.turn()==='w'?1:-1;
   // livre d'ouvertures
   if(book){const h=g.history().join(' ');const cands=[];
-    for(const o of OPENINGS){const seq=o.moves.map(m=>m[0]);const n=g.history().length;
+    for(const o of OPENINGS)for(const v of o.variants){const seq=v.moves.map(m=>m[0]);const n=g.history().length;
       if(n<seq.length&&seq.slice(0,n).join(' ')===h)cands.push(seq[n]);}
     if(cands.length&&elo>=1200)return cands[Math.floor(Math.random()*cands.length)];}
   const root=g.moves({verbose:true});
@@ -2097,23 +2205,31 @@ function viewLearnList(){
  token++; reset(); $('#status').textContent='';
  $('#view').innerHTML=`<div class="panel"><div class="label">Avec les blancs</div><div class="list">${opBtns('w')}</div>
  <div class="label">Avec les noirs</div><div class="list">${opBtns('b')}</div></div>`;
- document.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>learn(OPENINGS.find(o=>o.id===b.dataset.op)));
+ document.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>pickVariant(OPENINGS.find(o=>o.id===b.dataset.op)));
 }
-function opBtns(side){return OPENINGS.filter(o=>o.side===side).map(o=>`<button class="op" data-op="${o.id}"><b>${o.name}</b><small>${o.moves.slice(0,2).map((m,i)=>(i%2?'':(i/2+1)+'.')+fr(m[0])).join(' ')}</small></button>`).join('');}
-async function learn(o){
- const my=++token; reset(null,o.side); let i=0, fails=0;
+function opBtns(side){return OPENINGS.filter(o=>o.side===side).map(o=>`<button class="op" data-op="${o.id}"><b>${o.name}</b><small>${o.variants.length} variantes</small></button>`).join('');}
+function pickVariant(o){
+ token++; reset(null,o.side);
  $('#view').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><b>${o.name}</b><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></div>
+ <div class="list" style="grid-template-columns:1fr 1fr">${o.variants.map((v,i)=>`<button class="op" data-v="${i}"><b>${v.name}</b><small>${Math.ceil(v.moves.length/2)} coups</small></button>`).join('')}
+ <button class="op primary" data-v="r"><b>Au hasard</b><small>pour réviser</small></button><button class="op" id="back"><b>← Retour</b><small>ouvertures</small></button></div></div>`;
+ $('#back').onclick=viewLearnList;
+ document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{const i=b.dataset.v==='r'?Math.floor(Math.random()*o.variants.length):+b.dataset.v;learn(o,i);});
+}
+async function learn(o,vi){ const V=o.variants[vi];
+ const my=++token; reset(null,o.side); let i=0, fails=0;
+ $('#view').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><b>${o.name} · ${V.name}</b><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></div>
  <div class="progress"><i id="pg" style="width:0"></i></div>
  <div class="msg" id="msg">${o.intro}</div>
  <div class="row"><button id="hint">Indice</button><button id="show">Solution</button><button id="restart">↺</button><button id="back">Liste</button></div></div>`;
  const msg=$('#msg');
- $('#back').onclick=viewLearnList; $('#restart').onclick=()=>learn(o);
- const pg=()=>$('#pg').style.width=(100*i/o.moves.length)+'%';
+ $('#back').onclick=()=>pickVariant(o); $('#restart').onclick=()=>learn(o,vi);
+ const pg=()=>$('#pg').style.width=(100*i/V.moves.length)+'%';
  const num=k=>Math.floor(k/2)+1+(k%2?'…':'.');
  async function step(){
   if(my!==token)return; pg();
-  if(i>=o.moves.length){msg.innerHTML=`<span class="ok">Ligne terminée !</span> Tu connais la ${o.name}. Refais-la sans indice, puis va dans Exercices pour la tester.`;B.onMove=null;$('#hint').disabled=$('#show').disabled=true;return;}
-  const [san,ex]=o.moves[i]; const mine=(i%2===0)===(o.side==='w');
+  if(i>=V.moves.length){msg.innerHTML=`<span class="ok">Ligne terminée !</span> Tu connais cette variante. Refais-la sans indice, puis va dans Exercices pour la tester.`;B.onMove=null;$('#hint').disabled=$('#show').disabled=true;return;}
+  const [san,ex]=V.moves[i]; const mine=(i%2===0)===(o.side==='w');
   if(!mine){B.onMove=null; await wait(i===0?900:700); if(my!==token)return; play(san);
    msg.innerHTML=`Adversaire : <b class="move">${num(i)} ${fr(san)}</b><br>${ex}<br><span class="sub">À toi de jouer.</span>`; i++; fails=0; return step();}
   B.onMove=r=>{
@@ -2121,49 +2237,61 @@ async function learn(o){
    else{fails++;shake();msg.innerHTML=`<span class="ko">${fr(r.san)} n'est pas le coup de la ligne.</span> ${fails>=2?hintTxt():'Réessaie.'}`;}
   };
  }
- function hintTxt(){const m=new Chess(B.game.fen()).move(o.moves[i][0]);return `Indice : bouge la pièce en <b>${m.from}</b>.`;}
- $('#hint').onclick=()=>{if(i<o.moves.length){const m=new Chess(B.game.fen()).move(o.moves[i][0]);B.sel=m.from;B.targets=B.game.moves({square:m.from,verbose:true}).map(x=>x.to);render();}};
- $('#show').onclick=()=>{if(i<o.moves.length&&B.onMove){const [san,ex]=o.moves[i];play(san);msg.innerHTML=`Le coup était <b class="move">${num(i)} ${fr(san)}</b><br>${ex}`;i++;fails=0;step();}};
+ function hintTxt(){const m=new Chess(B.game.fen()).move(V.moves[i][0]);return `Indice : bouge la pièce en <b>${m.from}</b>.`;}
+ $('#hint').onclick=()=>{if(i<V.moves.length){const m=new Chess(B.game.fen()).move(V.moves[i][0]);B.sel=m.from;B.targets=B.game.moves({square:m.from,verbose:true}).map(x=>x.to);render();}};
+ $('#show').onclick=()=>{if(i<V.moves.length&&B.onMove){const [san,ex]=V.moves[i];play(san);msg.innerHTML=`Le coup était <b class="move">${num(i)} ${fr(san)}</b><br>${ex}`;i++;fails=0;step();}};
  step();
 }
 
 // ===== Exercices =====
-const EX={mode:'tac',ok:0,tot:0};
+const EX={mode:'tac',op:'all',ok:0,tot:0};
+const TRAPP=TRAPS.map(t=>{const g=new Chess();t.line.split(' ').forEach(m=>g.move(m));return {...t,fen:g.fen(),last:g.history({verbose:true}).pop()};});
 function viewEx(){
  token++;
- $('#view').innerHTML=`<div class="panel"><div class="seg"><button data-m="tac">Tactique</button><button data-m="op">Quiz ouvertures</button></div>
+ $('#view').innerHTML=`<div class="panel"><div class="seg"><button data-m="tac">Tactique</button><button data-m="trap">Pièges</button><button data-m="op">Quiz</button></div>
+ <select id="opf" style="font:inherit;background:var(--panel2);color:var(--fg);border:0;border-radius:8px;padding:8px" ${EX.mode==='tac'?'hidden':''}><option value="all">Toutes les ouvertures</option>${OPENINGS.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select>
  <div class="msg" id="msg"></div><div class="row"><button id="sol">Solution</button><button class="primary" id="next">Suivant</button><span class="score" id="sc" style="margin-left:auto;align-self:center;font-size:.85rem"></span></div></div>`;
  document.querySelectorAll('[data-m]').forEach(b=>{b.classList.toggle('on',b.dataset.m===EX.mode);b.onclick=()=>{EX.mode=b.dataset.m;viewEx();};});
+ $('#opf').value=EX.op; $('#opf').onchange=e=>{EX.op=e.target.value;nextEx();};
  $('#next').onclick=nextEx; nextEx();
 }
 function score(){$('#sc').textContent=`${EX.ok}/${EX.tot}`;}
-function nextEx(){
- const my=++token; score(); const msg=$('#msg');
- if(EX.mode==='tac'){
-  const p=PUZZLES[Math.floor(Math.random()*PUZZLES.length)];
-  reset(p.fen,p.fen.split(' ')[1]); const side=B.game.turn()==='w'?'blancs':'noirs';
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function puzzle(p,msg){
+  reset(p.fen,p.fen.split(' ')[1]); if(p.last){B.last=p.last;render();}
+  const side=B.game.turn()==='w'?'blancs':'noirs';
   msg.innerHTML=`<b>${p.title}</b><br>Les ${side} jouent. ${p.mate?'Trouve le mat en 1.':'Trouve le meilleur coup.'}`;
   let done=false;
   const finish=good=>{done=true;B.onMove=null;EX.tot++;if(good)EX.ok++;score();};
   B.onMove=r=>{ if(done)return;
    const t=new Chess(B.game.fen());t.move(r.san);
-   if(r.san===p.sol||(p.mate&&t.in_checkmate())){play(r.san);finish(true);msg.innerHTML=`<span class="ok">Exact : ${fr(r.san)}</span><br>${p.expl}`;}
+   if(r.san===p.sol||(p.alt||[]).includes(r.san)||(p.mate&&t.in_checkmate())){play(r.san);finish(true);msg.innerHTML=`<span class="ok">Exact : ${fr(r.san)}</span><br>${p.expl}`;}
    else{shake();msg.innerHTML=`<span class="ko">${fr(r.san)} : non.</span> Cherche encore, ou appuie sur Solution.`;}};
   $('#sol').onclick=()=>{if(done)return;play(p.sol);finish(false);msg.innerHTML=`Solution : <b class="move">${fr(p.sol)}</b><br>${p.expl}`;};
- } else {
-  const o=OPENINGS[Math.floor(Math.random()*OPENINGS.length)];
-  const mineIdx=o.moves.map((_,k)=>k).filter(k=>(k%2===0)===(o.side==='w')&&k>=2);
-  const k=mineIdx[Math.floor(Math.random()*mineIdx.length)];
-  reset(null,o.side); for(let j=0;j<k;j++)B.game.move(o.moves[j][0]);
-  const lm=B.game.history({verbose:true}).pop(); B.last=lm; render();
-  msg.innerHTML=`<b>${o.name}</b>, après ${o.moves.slice(0,k).map((m,j)=>(j%2?'':(j/2+1)+'.')+fr(m[0])).join(' ')}<br>Quel est le coup de la ligne ?`;
-  let done=false, tries=0;
-  const finish=good=>{done=true;B.onMove=null;EX.tot++;if(good)EX.ok++;score();};
-  B.onMove=r=>{if(done)return;
-   if(r.san===o.moves[k][0]){play(r.san);finish(tries===0);msg.innerHTML=`<span class="ok">Oui : ${fr(r.san)}</span><br>${o.moves[k][1]}`;}
-   else{tries++;shake();msg.innerHTML=`<span class="ko">${fr(r.san)} n'est pas le coup de la ligne.</span> Réessaie.`;}};
-  $('#sol').onclick=()=>{if(done)return;play(o.moves[k][0]);finish(false);msg.innerHTML=`Le coup : <b class="move">${fr(o.moves[k][0])}</b><br>${o.moves[k][1]}`;};
- }
+}
+function nextEx(){
+ const my=++token; score(); const msg=$('#msg');
+ const ops=EX.op==='all'?OPENINGS:OPENINGS.filter(o=>o.id===EX.op);
+ if(EX.mode==='tac') return puzzle(pick(PUZZLES),msg);
+ if(EX.mode==='trap'){const pool=TRAPP.filter(t=>ops.some(o=>o.id===t.op));
+   if(!pool.length){reset();msg.textContent="Pas encore de piège pour cette ouverture : choisis « Toutes ».";return;}
+   return puzzle(pick(pool),msg);}
+ const o=pick(ops), V=pick(o.variants);
+ const mineIdx=V.moves.map((_,k)=>k).filter(k=>(k%2===0)===(o.side==='w')&&k>=2);
+ const k=pick(mineIdx);
+ reset(null,o.side); for(let j=0;j<k;j++)B.game.move(V.moves[j][0]);
+ B.last=B.game.history({verbose:true}).pop(); render();
+ const hist=V.moves.slice(0,k).map(m=>m[0]).join(' ');
+ // tous les coups de cette ouverture valables depuis cette position
+ const ok=new Set(o.variants.filter(w=>w.moves.length>k&&w.moves.slice(0,k).map(m=>m[0]).join(' ')===hist).map(w=>w.moves[k][0]));
+ const recent=V.moves.slice(Math.max(0,k-4),k).map((m,j)=>{const n=Math.max(0,k-4)+j;return (n%2?'':(n/2+1)+'.')+fr(m[0]);}).join(' ');
+ msg.innerHTML=`<b>${o.name} · ${V.name}</b><br>Après ${k>4?"…":""}${recent}. Quel est le coup de la ligne ?`;
+ let done=false, tries=0;
+ const finish=good=>{done=true;B.onMove=null;EX.tot++;if(good)EX.ok++;score();};
+ B.onMove=r=>{if(done)return;
+  if(ok.has(r.san)){play(r.san);finish(tries===0);const w=o.variants.find(w=>w.moves.slice(0,k).map(m=>m[0]).join(' ')===hist&&w.moves[k][0]===r.san);msg.innerHTML=`<span class="ok">Oui : ${fr(r.san)}</span><br>${w.moves[k][1]}`;}
+  else{tries++;shake();msg.innerHTML=`<span class="ko">${fr(r.san)} n'est pas dans la ligne.</span> ${tries>=2?'Indice : bouge la pièce en <b>'+new Chess(B.game.fen()).move(V.moves[k][0]).from+'</b>.':'Réessaie.'}`;}};
+ $('#sol').onclick=()=>{if(done)return;play(V.moves[k][0]);finish(false);msg.innerHTML=`Le coup : <b class="move">${fr(V.moves[k][0])}</b><br>${V.moves[k][1]}`;};
 }
 
 // ===== Jouer =====
