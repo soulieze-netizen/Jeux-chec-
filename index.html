@@ -12,16 +12,16 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:18px;line-height:1.45}
-:root{padding-top:env(safe-area-inset-top,0px)}
-.wrap{max-width:640px;margin:0 auto;padding-block:max(12px,env(safe-area-inset-top,0px)) 110px;display:flex;flex-direction:column;gap:12px}
-header,#view{padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
-header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
-h1{font-size:1.35rem;font-weight:700;margin:0}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45}
+
+.wrap{max-width:640px;margin:0 auto;height:100dvh;padding-block:max(6px,env(safe-area-inset-top,0px)) calc(58px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;overflow:hidden}
+header,#view{flex:1;min-height:0;overflow:auto;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px;flex:none}
+h1{font-size:1.15rem;font-weight:700;margin:0}
 h2{font-size:1.3rem;font-weight:700;margin:0}
 .sub{color:var(--muted);font-size:1rem}
-.board{position:relative;width:100%;aspect-ratio:1;max-width:100%;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);user-select:none;touch-action:manipulation}
-.sq{position:relative;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:min(11vw,68px);line-height:1;cursor:pointer}
+.board{position:relative;flex:none;align-self:center;width:min(100%,calc(100dvh - 60px - 58px - 300px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));aspect-ratio:1;max-width:100%;display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);user-select:none;touch-action:manipulation}
+.sq{position:relative;min-width:0;min-height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:min(11vw,9.5dvh,68px);line-height:1;cursor:pointer}
 .sq.l{background:var(--light)}.sq.d{background:var(--dark)}
 .sq.last::after{content:"";position:absolute;inset:0;background:rgba(255,255,51,.42)}
 .sq.sel::after{content:"";position:absolute;inset:0;background:rgba(255,255,51,.6)}
@@ -35,29 +35,29 @@ h2{font-size:1.3rem;font-weight:700;margin:0}
 .sq.l .coord{color:var(--dark)}.sq.d .coord{color:var(--light)}
 .shake{animation:sh .35s}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 @media (prefers-reduced-motion:reduce){.shake{animation:none}}
-.panel{background:var(--panel);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px}
-.msg{min-height:3.2em;font-size:1.05rem}
+.panel{background:var(--panel);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.msg{min-height:2.8em;font-size:1rem;line-height:1.35}
 .msg b.move{font-size:1.2rem;color:var(--accent)}
 .ok{color:var(--good);font-weight:700}.ko{color:var(--bad);font-weight:700}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-button{font:inherit;font-size:1rem;font-weight:700;border:0;background:var(--panel2);color:var(--fg);border-radius:8px;padding:12px 16px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+button{font:inherit;font-size:1rem;font-weight:700;border:0;background:var(--panel2);color:var(--fg);border-radius:8px;padding:9px 12px;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.35)}
 button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
 button.primary{background:var(--accent);color:#fff;box-shadow:0 4px 0 var(--accent2)}
 button:focus-visible{outline:3px solid var(--sel);outline-offset:2px}
 button:disabled{opacity:.4}
-.list{display:flex;flex-direction:column;gap:8px}
-.op{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:14px 16px;font-size:1.1rem}
+.list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.op{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:9px 10px;font-size:.95rem}
 .op small{color:var(--muted);display:block;font-weight:400;font-size:.9rem;margin-top:2px}
 .tag{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;border-radius:20px;padding:3px 10px;white-space:nowrap;font-weight:700}
 .tag.w{background:#fff;color:#2b2622}.tag.b{background:#1b1a18;color:#fff;border:1px solid var(--line)}
 .label{font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
-.levels{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.levels{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.levels button{padding:9px 0;font-size:.85rem}
 .levels button.on,.seg button.on{background:var(--accent);box-shadow:0 4px 0 var(--accent2)}
-.seg{display:flex;gap:8px}.seg button{flex:1}
-.hist{font-variant-numeric:tabular-nums;font-size:1rem;color:var(--muted);max-height:4.8em;overflow:auto}
+.seg{display:flex;gap:8px}.seg button{flex:1}.tight{gap:6px}.tight button{flex:1;padding:9px 4px;min-width:0}.tight .seg{gap:6px}
+.hist{font-variant-numeric:tabular-nums;font-size:.85rem;color:var(--muted);white-space:nowrap;overflow-x:auto}
 .progress{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}.progress i{display:block;height:100%;background:var(--accent);transition:width .3s}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--panel);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:20}
-nav.tabs button{flex:1;max-width:210px;border-radius:0;background:none;box-shadow:none;padding:16px 4px;font-size:1.05rem;color:var(--muted)}
+nav.tabs button{flex:1;max-width:210px;border-radius:0;background:none;box-shadow:none;padding:0;height:58px;font-size:1rem;color:var(--muted)}
 nav.tabs button.on{color:#fff;box-shadow:inset 0 4px 0 var(--accent)}
 .modal{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:10}
 .modal .box{background:var(--panel);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center}
@@ -2095,18 +2095,17 @@ let token=0; // annule les animations d'une vue précédente
 // ===== Onglet Ouvertures =====
 function viewLearnList(){
  token++; reset(); $('#status').textContent='';
- $('#view').innerHTML=`<div class="panel"><h2>Choisis une ouverture</h2><p class="sub" style="margin:0">Tu joues ton camp, l'adversaire joue tout seul. Chaque coup est expliqué.</p>
- <div class="label">Avec les blancs</div><div class="list">${opBtns('w')}</div>
+ $('#view').innerHTML=`<div class="panel"><div class="label">Avec les blancs</div><div class="list">${opBtns('w')}</div>
  <div class="label">Avec les noirs</div><div class="list">${opBtns('b')}</div></div>`;
  document.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>learn(OPENINGS.find(o=>o.id===b.dataset.op)));
 }
-function opBtns(side){return OPENINGS.filter(o=>o.side===side).map(o=>`<button class="op" data-op="${o.id}"><span><b>${o.name}</b><small>${o.moves.slice(0,6).map((m,i)=>(i%2?'':(i/2+1)+'.')+fr(m[0])).join(' ')}…</small></span><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></button>`).join('');}
+function opBtns(side){return OPENINGS.filter(o=>o.side===side).map(o=>`<button class="op" data-op="${o.id}"><b>${o.name}</b><small>${o.moves.slice(0,2).map((m,i)=>(i%2?'':(i/2+1)+'.')+fr(m[0])).join(' ')}</small></button>`).join('');}
 async function learn(o){
  const my=++token; reset(null,o.side); let i=0, fails=0;
- $('#view').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><h2>${o.name}</h2><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></div>
+ $('#view').innerHTML=`<div class="panel"><div class="row" style="justify-content:space-between;align-items:center"><b>${o.name}</b><span class="tag ${o.side}">${o.side==='w'?'Blancs':'Noirs'}</span></div>
  <div class="progress"><i id="pg" style="width:0"></i></div>
  <div class="msg" id="msg">${o.intro}</div>
- <div class="row"><button id="hint">Indice</button><button id="show">Montrer le coup</button><button id="restart">Recommencer</button><button id="back">Liste</button></div></div>`;
+ <div class="row"><button id="hint">Indice</button><button id="show">Solution</button><button id="restart">↺</button><button id="back">Liste</button></div></div>`;
  const msg=$('#msg');
  $('#back').onclick=viewLearnList; $('#restart').onclick=()=>learn(o);
  const pg=()=>$('#pg').style.width=(100*i/o.moves.length)+'%';
@@ -2133,11 +2132,11 @@ const EX={mode:'tac',ok:0,tot:0};
 function viewEx(){
  token++;
  $('#view').innerHTML=`<div class="panel"><div class="seg"><button data-m="tac">Tactique</button><button data-m="op">Quiz ouvertures</button></div>
- <div class="msg" id="msg"></div><div class="row"><button id="sol">Solution</button><button class="primary" id="next">Suivant</button><span class="score" id="sc" style="margin-left:auto;align-self:center"></span></div></div>`;
+ <div class="msg" id="msg"></div><div class="row"><button id="sol">Solution</button><button class="primary" id="next">Suivant</button><span class="score" id="sc" style="margin-left:auto;align-self:center;font-size:.85rem"></span></div></div>`;
  document.querySelectorAll('[data-m]').forEach(b=>{b.classList.toggle('on',b.dataset.m===EX.mode);b.onclick=()=>{EX.mode=b.dataset.m;viewEx();};});
  $('#next').onclick=nextEx; nextEx();
 }
-function score(){$('#sc').textContent=`${EX.ok} / ${EX.tot} réussis`;}
+function score(){$('#sc').textContent=`${EX.ok}/${EX.tot}`;}
 function nextEx(){
  const my=++token; score(); const msg=$('#msg');
  if(EX.mode==='tac'){
@@ -2171,12 +2170,11 @@ function nextEx(){
 const PL={elo:1200,color:'w'};
 function viewPlay(){
  token++; reset(null,PL.color);
- $('#view').innerHTML=`<div class="panel"><div class="label">Niveau de l'ordinateur</div>
+ $('#view').innerHTML=`<div class="panel">
  <div class="levels">${[800,1000,1200,1400,1600,1800,2000].map(e=>`<button data-e="${e}">${e}</button>`).join('')}</div>
- <div class="label">Ta couleur</div><div class="seg"><button data-c="w">Blancs</button><button data-c="b">Noirs</button></div>
+ 
  <div class="msg" id="msg"></div><div class="hist" id="hist"></div>
- <div class="row"><button class="primary" id="new">Nouvelle partie</button><button id="undo">Annuler un coup</button><button id="flip">Tourner</button></div>
- <p class="sub" style="margin:0">Niveaux approximatifs : moteur maison qui calcule dans ton navigateur. Le 2000 réfléchit ~4 s.</p></div>`;
+ <div class="row tight" style="flex-wrap:nowrap"><div class="seg" style="flex:2"><button data-c="w">Blancs</button><button data-c="b">Noirs</button></div><button class="primary" id="new">Nouvelle</button><button id="undo">Annuler</button><button id="flip">⇅</button></div></div>`;
  const sync=()=>{document.querySelectorAll('[data-e]').forEach(b=>b.classList.toggle('on',+b.dataset.e===PL.elo));document.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('on',b.dataset.c===PL.color));};
  document.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{PL.elo=+b.dataset.e;sync();});
  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{PL.color=b.dataset.c;sync();newGame();});
